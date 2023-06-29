@@ -35,15 +35,36 @@ public class MBDao {
 
 	}
 
+//	public int maxGroups() {
+//		query = "SELECT NVL(MAX(GROUPS),1) AS MAXGROUP FROM MVC_BOARD";
+//		int maxgroup = 0;
+//		
+//		try {
+//			Connection conn = ds.getConnection();
+//			Statement stmt = conn.createStatement();
+//			ResultSet rs = stmt.executeQuery(query);
+//			
+//			if (rs.next()) {
+//				maxgroup = rs.getInt("MAXGROUP");
+//			}
+//
+//		} catch (SQLException e1) {
+//			e1.printStackTrace();
+//		}
+//
+//		return maxgroup;
+//
+//	}
+
 	public ArrayList<MBDto> selectAll() {
 		ArrayList<MBDto> dtos = new ArrayList<MBDto>();
 
-		query = "SELECT * FROM MVC_BOARD";
+		query = "SELECT * FROM MVC_BOARD START WITH groups = 0 CONNECT BY PRIOR id = groups ORDER SIBLINGS BY step ASC";
 
 		try {
-			conn = ds.getConnection();
-			stmt = conn.createStatement();
-			rs = stmt.executeQuery(query);
+			Connection conn = ds.getConnection();
+			Statement stmt = conn.createStatement();
+			ResultSet rs = stmt.executeQuery(query);
 
 			while (rs.next()) {
 				int id = rs.getInt("id");
@@ -62,22 +83,80 @@ public class MBDao {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		return dtos;
 	}
 
-	public MBDto selectId(int id) {
+	public void updateHitId(int id) {
 
 		MBDto dto = null;
 
-		query = "SELECT * FROM MVC_BOARD WHERE ID =?";
+		String updatequery = "UPDATE MVC_BOARD SET HIT=HIT+1 WHERE ID=?";
 
 		try {
-			conn = ds.getConnection();
-			pstmt = conn.prepareStatement(query);
+			Connection conn = ds.getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(updatequery);
 			pstmt.setInt(1, id);
-			rs = pstmt.executeQuery();
+
+			int iResult = pstmt.executeUpdate();
+
+			if (iResult >= 1) {
+				System.out.println("hit update success");
+			} else {
+				System.out.println("hit update fail");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	public MBDto selectId(int id) {
+		PreparedStatement ps1;
+		PreparedStatement ps2;
+		MBDto dto = null;
+		
+		String updatequery = "UPDATE MVC_BOARD SET HIT=HIT+1 WHERE ID=?";
+		String query = "SELECT * FROM MVC_BOARD WHERE ID =?";
+		System.out.println("id : "+id);
+		try {
+			Connection conn = ds.getConnection();
+
+//			pstmt = conn.prepareStatement(updatequery);
+//			pstmt.setInt(1, id);
+//			pstmt.executeUpdate();
+			ps1 = conn.prepareStatement(updatequery);
+			ps1.setInt(1, id);
+			int iResult = ps1.executeUpdate();
+			
+			ps2 = conn.prepareStatement(query);
+			ps2.setInt(1, id);
+			rs = ps2.executeQuery();
 
 			if (rs.next()) {
 				System.out.println("!!!");
@@ -91,28 +170,40 @@ public class MBDao {
 				int indent = rs.getInt("indent");
 
 				dto = new MBDto(id, name, title, content, write_date, hit, groups, step, indent);
-
 			}
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
+
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		return dto;
 
 	}
 
-	public void insertContent(MBDto dto) {
+	public void insertContent(String name, String title, String content,int group) {
 
 //		query = "insert into mvc_board values(seq_mvc)board.nextval,?,?,?,sysdate,?,?,?,?)";
-		query = "INSERT INTO MVC_BOARD(ID,NAME,TITLE,CONTENT) VALUES(SEQ_MVC_BOARD.NEXTVAL,?,?,?)";
+		query = "INSERT INTO MVC_BOARD(ID,NAME,TITLE,CONTENT,GROUPS) VALUES(SEQ_MVC_BOARD.NEXTVAL,?,?,?,?)";
 
 		try {
-			conn = ds.getConnection();
-			pstmt = conn.prepareStatement(query);
+			Connection conn = ds.getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(query);
 
-			pstmt.setString(1, dto.getName());
-			pstmt.setString(2, dto.getTitle());
-			pstmt.setString(3, dto.getContent());
+			pstmt.setString(1, name);
+			pstmt.setString(2, title);
+			pstmt.setString(3, content);
+			pstmt.setInt(4, group);
 //			pstmt.setInt(4, dto.getHit());
 //			pstmt.setInt(5, dto.getGroups());
 //			pstmt.setInt(6, dto.getStep());
@@ -129,28 +220,80 @@ public class MBDao {
 
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 	}
 
-	public void updateContent(MBDto dto) {
+	public void insertReply(MBDto dto) {
 
-		int id = dto.getId();
-		String name = dto.getName();
-		String title = dto.getTitle();
-		String content = dto.getContent();
+//		query = "insert into mvc_board values(seq_mvc)board.nextval,?,?,?,sysdate,?,?,?,?)";
+		query = "INSERT INTO MVC_BOARD(ID,NAME,TITLE,CONTENT,GROUPS,STEP,INDENT) VALUES(SEQ_MVC_BOARD.NEXTVAL,?,?,?,?,?,?)";
+
+		try {
+			Connection conn = ds.getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(query);
+
+			pstmt.setString(1, dto.getName());
+			pstmt.setString(2, dto.getTitle());
+			pstmt.setString(3, dto.getContent());
+			pstmt.setInt(4, dto.getGroups());
+			pstmt.setInt(5, dto.getStep());
+			pstmt.setInt(6, dto.getIndent());
+
+			int iResult = pstmt.executeUpdate();
+			System.out.println(iResult);
+			if (iResult >= 1) {
+				System.out.println("REPLY insert success");
+			} else {
+				System.out.println("REPLY insert fail");
+
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	public void updateContent(int id, String name, String title, String content) {
+
+//		int id = dto.getId();
+//		String name = dto.getName();
+//		String title = dto.getTitle();
+//		String content = dto.getContent();
 //		Timestamp writedate = dto.getWrite_date();
 //		int hit=dto.getHit();
 //		int groups=dto.getGroups();
 //		int step=dto.getStep();
 //		int indent=dto.getIndent();
-		System.out.println(title + name + content + id);
 
 		query = "UPDATE MVC_BOARD SET NAME=?,TITLE=?,CONTENT=? WHERE ID=?";
 
 		try {
-			conn = ds.getConnection();
-			pstmt = conn.prepareStatement(query);
+			Connection conn = ds.getConnection();
+			PreparedStatement pstmt = conn.prepareStatement(query);
 			pstmt.setString(1, name);
 			pstmt.setString(2, title);
 			pstmt.setString(3, content);
@@ -167,6 +310,17 @@ public class MBDao {
 		} catch (Exception e) {
 			e.printStackTrace();
 
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 	}
@@ -175,21 +329,35 @@ public class MBDao {
 
 		query = "DELETE FROM MVC_BOARD WHERE ID=?";
 
-		try {
-			conn = ds.getConnection();
-			pstmt = conn.prepareStatement(query);
-			pstmt.setInt(1, id);
+		System.out.println("deletecontent");
 
+		try {
+			Connection conn = ds.getConnection();
+			System.out.println("connection");
+			PreparedStatement pstmt = conn.prepareStatement(query);
+			pstmt.setInt(1, id);
+			System.out.println("excute전");
 			int iResult = pstmt.executeUpdate();
 
 			if (iResult >= 1) {
 				System.out.println("delete success");
 			} else {
 				System.out.println("delete fail");
-
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (pstmt != null)
+					pstmt.close();
+				if (conn != null)
+					conn.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
+
 }

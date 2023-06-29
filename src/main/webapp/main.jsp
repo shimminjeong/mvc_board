@@ -26,7 +26,27 @@
         tr:hover {
             background-color: #f5f5f5;
         }
+
+        .write-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #f2f2f2;
+            border: none;
+            color: #000;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .write-button:hover {
+            background-color: #ddd;
+        }
+        
     </style>
+</head>
+<body>
 </head>
 <body>
 
@@ -41,11 +61,13 @@
 	        <th>조회수</th>
 	    </tr>
 	    <c:forEach var="result" items="${boardlist}">
-	        <tr>
+	    <tr>
 	        	<td><input type="checkbox" name="selectedIds" value="${result.id}" /></td>
 	        	<td><c:out value="${result.id}" /></td>
 	            <td><c:out value="${result.name}" /></td>
-	            <td><a href="submain.do?id=${result.id}">${result.title}</a></td>
+	            <td><c:forEach var="indent" begin="1" end="${result.indent}">
+                        &nbsp;&nbsp;
+                    </c:forEach><a href="submain.do?id=${result.id}">${result.title}</a></td>
 	            <td><c:out value="${result.write_date}"/></td>
 	            <td><c:out value="${result.hit}" /></td>
 	    </tr>
@@ -53,7 +75,7 @@
 	</table>
 
 	<button type="submit">삭제</button>
-	<a href="InsertContent.jsp">글쓰기</a>
+    <button type="button" class="write-button" onclick="location.href='InsertContent.jsp'">글쓰기</button>
 </form>
 </body>
 </html>

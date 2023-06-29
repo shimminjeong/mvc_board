@@ -12,8 +12,13 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import com.simminjeong.dto.MBDto;
-import com.simminjeong.service.Service;
-import com.simminjeong.service.ServiceImpl;
+import com.simminjeong.service.DeleteCommand;
+import com.simminjeong.service.InsertCommand;
+import com.simminjeong.service.InsertReplyCommand;
+import com.simminjeong.service.MBCommand;
+import com.simminjeong.service.SelectAllCommand;
+import com.simminjeong.service.SelectCommand;
+import com.simminjeong.service.UpdateCommand;
 
 /**
  * Servlet implementation class FrontCon
@@ -55,96 +60,59 @@ public class FrontCon extends HttpServlet {
 			throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		System.out.println("actionDo");
-		String uri = request.getRequestURI();
-		System.out.println("uri : " + uri);
+		request.setCharacterEncoding("UTF-8");
 
+		String viewPage = null;
+		MBCommand service = null;
+
+		String uri = request.getRequestURI();
+//
 		String conPath = request.getContextPath();
-		System.out.println("conPath : " + conPath);
 
 		String command = uri.substring(conPath.length());
-		System.out.println("command : " + command);
 
 		if (command.equals("/main.do")) {
 			System.out.println("/main.do");
+			viewPage = "main.jsp";
 
-			Service svc = new ServiceImpl();
-			ArrayList<MBDto> dtos = svc.excuteSelectAll();
+			MBCommand svc = new SelectAllCommand();
+			svc.excute(request, response);
 
-			request.setAttribute("boardlist", dtos);
-
-			RequestDispatcher dispatcher = request.getRequestDispatcher("/main.jsp");
-			dispatcher.forward(request, response);
-
-		} else if (command.contains("/submain.do")) {
+		} else if (command.equals("/submain.do")) {
 			System.out.println("/submain.do");
+			viewPage = "UpdateContent.jsp";
 
-			int id = Integer.parseInt(request.getParameter("id"));
-			System.out.println("id" + id);
-			Service svc = new ServiceImpl();
-			MBDto dto = svc.excuteSelectId(id);
-
-			/*
-			 * response.setContentType("text/html; charset=UTF-8"); PrintWriter pw =
-			 * response.getWriter();
-			 * pw.println("<html><head><title>회원조회</title></head></head><body>");
-			 * 
-			 * 
-			 * int id1 = dto.getId(); String name = dto.getName(); String title =
-			 * dto.getTitle(); String content = dto.getContent(); int hit = dto.getHit();
-			 * 
-			 * pw.println("SSSS"+id1 + ", " + name + ", " + title + ", " + content + ", " +
-			 * hit);
-			 * 
-			 * pw.println("</body></html>");
-			 */
-
-			request.setAttribute("idcontent", dto);
-
-			RequestDispatcher dispatcher = request.getRequestDispatcher("/submain.jsp");
-			dispatcher.forward(request, response);
-
-		} else if (command.equals("/insert.do")) {
-			System.out.println("insert.do");
-
-			String title = request.getParameter("title");
-			String name = request.getParameter("name");
-			String content = request.getParameter("content");
-			System.out.println(title + name + content);
-			Service svc = new ServiceImpl();
-			MBDto dto = new MBDto(name, title, content);
-			svc.excuteInsert(dto);
-
-			response.sendRedirect("/Mvc_board/main.do");
-
+			MBCommand svc = new SelectCommand();
+			svc.excute(request, response);
 		} else if (command.equals("/update.do")) {
-			System.out.println("update.do");
-			int id = Integer.parseInt(request.getParameter("id"));
-			String title = request.getParameter("title");
-			String name = request.getParameter("name");
-			String content = request.getParameter("content");
-			System.out.println(title + name + content);
+			System.out.println("/update.do");
+			viewPage = "menu.jsp";
 
-			MBDto dto = new MBDto(id, name, title, content);
-			Service svc = new ServiceImpl();
-			svc.excuteUpdate(dto);
-
-			response.sendRedirect("/Mvc_board/main.do");
-
+			MBCommand svc = new UpdateCommand();
+			svc.excute(request, response);
 		} else if (command.equals("/delete.do")) {
-			System.out.println("delete.do");
-			Service svc = new ServiceImpl();
-			String[] selectedIds = request.getParameterValues("selectedIds");
-			if (selectedIds != null) {
-				for (String id : selectedIds) {
-					svc.excuteDelete(Integer.parseInt(id));
-				}
-				response.sendRedirect("/Mvc_board/main.do");
-			} else {
-				response.sendRedirect("/Mvc_board/main.do");
+			System.out.println("/delete.do");
+			viewPage = "menu.jsp";
 
-			}
+			MBCommand svc = new DeleteCommand();
+			svc.excute(request, response);
+		} else if (command.equals("/insert.do")) {
+			System.out.println("/insert.do");
+			viewPage = "menu.jsp";
+
+			MBCommand svc = new InsertCommand();
+			svc.excute(request, response);
+
+		} else if (command.equals("/insertReply.do")) {
+			System.out.println("/insertReply.do");
+			viewPage = "menu.jsp";
+			MBCommand svc = new InsertReplyCommand();
+			svc.excute(request, response);
 
 		}
+
+		RequestDispatcher dispatcher = request.getRequestDispatcher(viewPage);
+		dispatcher.forward(request, response);
 
 	}
 

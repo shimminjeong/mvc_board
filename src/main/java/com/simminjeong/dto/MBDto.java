@@ -13,19 +13,31 @@ public class MBDto {
 	private int groups;
 	private int step;
 	private int indent;
-	
-	public MBDto(String name, String title, String content){
+
+	public MBDto() {
+
+	}
+
+	public MBDto(String name, String title, String content) {
 		this.name = name;
 		this.title = title;
 		this.content = content;
 	}
-	
-	
-	public MBDto(int id,String name, String title, String content){
-		this.id=id;
+
+	public MBDto(int id, String name, String title, String content) {
+		this.id = id;
 		this.name = name;
 		this.title = title;
 		this.content = content;
+	}
+
+	public MBDto(String name, String title, String content, int groups, int step, int indent) {
+		this.name = name;
+		this.title = title;
+		this.content = content;
+		this.groups = groups;
+		this.step = step;
+		this.indent = indent;
 	}
 
 	public MBDto(int id, String name, String title, String content, Timestamp writedate, int hit, int groups, int step,
